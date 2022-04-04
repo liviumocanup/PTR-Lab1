@@ -13,7 +13,6 @@ defmodule Read do
 
   def handle_info(%HTTPoison.AsyncChunk{chunk: chunk}, _state) do
     process_event(chunk)
-
     {:noreply, nil}
   end
 
@@ -24,17 +23,22 @@ defmodule Read do
       Process.sleep(1000)
       tweet = data["message"]["tweet"]
       text = tweet["text"]
-      hashtags = tweet["entities"]["hashtags"]
+      # hashtags = tweet["entities"]["hashtags"]
+      favorites = tweet["favorite_count"]
+      retweets = tweet["retweet_count"]
+      followers = tweet["user"]["followers_count"]
+      name = tweet["user"]["name"]
 
-      # Task.async(fn -> LoadBalancer.print(text) end)
-      Task.async(fn -> WorkerPoolManager.execute_speculative(text) end)
-      Enum.each(hashtags, fn hashtag -> Analyzer.analyze_hashtag(hashtag["text"]) end)
+      info = {text, {favorites, retweets, followers, name}}
+      Task.start(fn -> LoadBalancer.reader(:PrintLB, info) end)
+      # Task.async(fn -> WorkerPoolManager.execute_speculatively(text) end)
+      # Enum.each(hashtags, fn hashtag -> Analyzer.analyze_hashtag(hashtag["text"]) end)
     end
   end
 
   defp process_event(_corrupted_event) do
     IO.puts("## Corrupted event discarded ##")
-    LoadBalancer.print(":kill")
+    LoadBalancer.process(:PrintLB, ":kill")
   end
 
   def handle_info(%HTTPoison.AsyncStatus{} = status, _state) do

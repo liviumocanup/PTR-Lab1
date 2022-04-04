@@ -5,15 +5,15 @@ defmodule Analyzer do
 
   def start_link do
     IO.puts "Starting analyzer..."
-    GenServer.start_link(__MODULE__, {:os.timestamp(), %{}}, name: __MODULE__)
+    GenServer.start_link(__MODULE__, {:os.timestamp(), %{}})
   end
 
   def init(state) do
     {:ok, state}
   end
 
-  def analyze_hashtag(hashtag) do
-    GenServer.cast(__MODULE__, hashtag)
+  def analyze_hashtag(pid, hashtag) do
+    GenServer.cast(pid, hashtag)
   end
 
   def handle_cast(hashtag, state) do

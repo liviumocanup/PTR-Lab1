@@ -5,63 +5,77 @@ defmodule LoadBalancer do
   @idle_threshold 1
   @check_idle_interval 5000
 
-  def start_link() do
-    IO.puts "Starting LoadBalancer ..."
-    pid = GenServer.start_link(__MODULE__, [])
+  def start_link(supervisor_name, wpm_pid) do
+    lb_name = generate_name(supervisor_name)
+    supervisor_name = String.to_atom(supervisor_name)
+    IO.puts "Starting LoadBalancer for #{inspect supervisor_name}..."
+    pid = GenServer.start_link(__MODULE__, %{supervisor_name: supervisor_name, sup_pid: GenServer.whereis(supervisor_name), wpm_pid: wpm_pid, lb_name: lb_name})
     |> elem(1)
-    Process.register(pid, __MODULE__)
+    Process.register(pid, lb_name)
   end
 
-  def init(args) do
-    WorkerPoolManager.start_link()
-    schedule_check_idle()
-    ReadSupervisor.start_link()
-    {:ok, args}
+  def init(state) do
+    if state.wpm_pid != nil do
+      schedule_check_idle()
+    end
+
+    {:ok, state}
   end
 
-  def handle_call(msg, _from, state) do
-    printer_pid = least_connected_printer()
-    IO.puts "Least connected printer: #{inspect find_id(printer_pid)} with #{inspect Process.info(printer_pid)[:message_queue_len]} messages"
-    send(printer_pid, {find_id(printer_pid), msg})
-    {:reply, :ok, state}
+  def handle_cast(info, state) do
+    worker_pid = least_connected_worker(state)
+    GenServer.cast(worker_pid, {find_id(worker_pid, state), info})
+    {:noreply, state}
+  end
+
+  def handle_call(info, _from, state) do
+    worker_pid = least_connected_worker(state)
+    # IO.puts "Least connected worker: #{inspect find_id(worker_pid, state)} with #{inspect Process.info(worker_pid)[:message_queue_len]} messages"
+    # response = send(worker_pid, {find_id(worker_pid, state), info})
+    response = GenServer.call(worker_pid, {find_id(worker_pid, state), info})
+    {:reply, response, state}
   end
 
   def handle_info(:check_idle, state) do
-    printer_pid = least_connected_printer()
-    check_idle(printer_pid)
+    worker_pid = least_connected_worker(state)
+    check_idle(worker_pid, state)
     schedule_check_idle()
     {:noreply, state}
   end
 
-  def print(msg) do
-    GenServer.call(GenServer.whereis(__MODULE__), msg)
+  def process(lb_name, info) do
+    GenServer.call(GenServer.whereis(lb_name), info)
   end
 
-  defp schedule_check_idle do
+  def reader(lb_name, info) do
+    GenServer.cast(GenServer.whereis(lb_name), info)
+  end
+
+  def schedule_check_idle do
     Process.send_after(self(), :check_idle, @check_idle_interval)
   end
 
-  defp check_idle(pid) do
+  defp check_idle(pid, state) do
     if Process.info(pid)[:message_queue_len] > @load_threshold do
-      IO.puts "\n\n====>>> Printers are overloaded."
-      WorkerPoolManager.increase_workers(1)
+      IO.puts "\n\n====>>>#{state.lb_name}: Workers are overloaded."
+      WorkerPoolManager.increase_workers(state.wpm_pid, 1)
     else
-      if Process.info(pid)[:message_queue_len] < @idle_threshold do
-        IO.puts "\n\n====>>> Printers are idle."
-        WorkerPoolManager.decrease_workers(1)
+      if Process.info(pid)[:message_queue_len] < @idle_threshold and Process.info(pid)[:message_queue_len] > 1 do
+        IO.puts "\n\n====>>>#{state.lb_name}: Workers are idle."
+        WorkerPoolManager.decrease_workers(state.wpm_pid, 1)
       end
     end
   end
 
-  defp least_connected_printer() do
-    printer_pids = get_all_pids()
-    counts = all_printers_queue_len(printer_pids)
+  defp least_connected_worker(state) do
+    worker_pids = get_all_pids(state)
+    counts = all_workers_queue_len(worker_pids)
     Enum.min_by(counts, fn {_, count} -> count end)
     |> elem(0)
   end
 
-  defp all_printers_queue_len(printer_pids) do
-    Enum.map(printer_pids, fn pid ->
+  defp all_workers_queue_len(worker_pids) do
+    Enum.map(worker_pids, fn pid ->
       {pid, Process.info(pid)[:message_queue_len]}
     end)
   end
@@ -72,11 +86,15 @@ defmodule LoadBalancer do
   #   end)
   # end
 
-  defp find_id(printer_pid) do
-    PrintSupervisor.get_worker_id(printer_pid)
+  defp find_id(worker_pid, state) do
+    GenericSupervisor.get_worker_id(state.sup_pid, worker_pid)
   end
 
-  defp get_all_pids() do
-    PrintSupervisor.get_all_pids()
+  defp get_all_pids(state) do
+    GenericSupervisor.get_all_pids(state.sup_pid)
+  end
+
+  defp generate_name(supervisor_name) do
+    String.to_atom(String.replace(supervisor_name, "Supervisor", "LB"))
   end
 end
