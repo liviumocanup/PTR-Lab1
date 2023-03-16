@@ -1,0 +1,20 @@
+@startuml
+
+participant "Analyzer" as A
+collections "Readers" as R
+participant "Load Balancer" as LB
+participant "Printer Supervisor" as PS
+collections "Printers" as P
+participant "Worker Pool Manager" as WPM
+
+R -> LB: Tweet Text
+LB -> PS: Request Printers' message queue
+LB <- PS: Printers' message queue length
+LB --> WPM: Increase or decrease Printers' count if needed
+PS <-- WPM: Start or terminate children
+LB -> PS: Request id of fitting Printer
+LB <- PS: Provide id 
+LB -> P: Tweet Text
+R -> A: Tweet Hashtag
+
+@enduml

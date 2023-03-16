@@ -17,7 +17,7 @@ defmodule Print do
     {:reply, state.message_count, state}
   end
 
-  def handle_info({id, :kill}, state) do
+  def handle_info({id, :kill}, _) do
     IO.puts("=====> Killing Printer #{id} ##")
     {:stop, :normal, id}
   end
