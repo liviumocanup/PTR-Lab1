@@ -26,13 +26,15 @@ defmodule Read do
       text = tweet["text"]
       hashtags = tweet["entities"]["hashtags"]
 
-      LoadBalancer.print(text)
+      # Task.async(fn -> LoadBalancer.print(text) end)
+      Task.async(fn -> WorkerPoolManager.execute_speculatively(text) end)
       Enum.each(hashtags, fn hashtag -> Analyzer.analyze_hashtag(hashtag["text"]) end)
     end
   end
 
   defp process_event(_corrupted_event) do
-    IO.puts("## Killing Printer ##")
+    IO.puts("## Corrupted event discarded ##")
+    LoadBalancer.print(":kill")
   end
 
   def handle_info(%HTTPoison.AsyncStatus{} = status, _state) do

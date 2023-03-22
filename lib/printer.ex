@@ -17,9 +17,10 @@ defmodule Print do
     {:reply, state.message_count, state}
   end
 
-  def handle_info({id, :kill}, _) do
+  def handle_info({id, :kill}, state) do
     IO.puts("=====> Killing Printer #{id} ##")
-    {:stop, :normal, id}
+
+    {:stop, :normal, state}
   end
 
   def handle_info({id, msg}, state) do
@@ -27,6 +28,17 @@ defmodule Print do
     censored_msg = censor(msg)
     IO.puts "\nPrinter #{id} #{slept} -> #{inspect censored_msg}"
     new_state = Map.update!(state, :message_count, fn count -> count + 1 end)
+    {:noreply, new_state}
+  end
+
+  def handle_info({id, msg, caller, ref}, state) do
+    slept = sleep()
+    censored_msg = censor(msg)
+    IO.puts "\nPrinter #{id} #{slept} -> #{inspect censored_msg}"
+    new_state = Map.update!(state, :message_count, fn count -> count + 1 end)
+
+    send(caller, {ref, :result, censored_msg})
+
     {:noreply, new_state}
   end
 
@@ -39,8 +51,8 @@ defmodule Print do
   defp censor(msg) do
     bad_words = [
       "arse", "arsehole", "ass", "asshole",
-      "bastard", "bitch", "bollocks", "bugger", "bullshit",
-      "cock", "crap", "cunt",
+      "bastard", "bitch", "bollocks", "booty", "bugger", "bullshit",
+      "cock", "crap", "cunt", "cum",
       "dick", "dickhead",
       "fuck",
       "minge", "minger",

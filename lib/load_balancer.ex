@@ -66,11 +66,11 @@ defmodule LoadBalancer do
     end)
   end
 
-  defp all_printers_message_count(printer_pids) do
-    Enum.map(printer_pids, fn pid ->
-      {pid, PrintSupervisor.get_message_count(pid)}
-    end)
-  end
+  # defp all_printers_message_count(printer_pids) do
+  #   Enum.map(printer_pids, fn pid ->
+  #     {pid, PrintSupervisor.get_message_count(pid)}
+  #   end)
+  # end
 
   defp find_id(printer_pid) do
     PrintSupervisor.get_worker_id(printer_pid)

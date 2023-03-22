@@ -4,7 +4,6 @@ defmodule PrintSupervisor do
   def start_link(num_workers) do
     IO.puts "Starting PrintSupervisor ..."
     Supervisor.start_link(__MODULE__, num_workers, name: __MODULE__)
-    |> elem(1)
   end
 
   def init(num_workers) do

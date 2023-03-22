@@ -2,12 +2,16 @@ defmodule WorkerPoolManager do
   use GenServer
 
   @start_num_workers 3
-  @max_num_workers 10
+  @max_num_workers 11
   @min_num_workers 1
+
+  @spec_num_workers 3
+  @spec_timeout 5000
 
   def start_link() do
     IO.puts "Starting WorkerPoolManager ..."
-    GenServer.start_link(__MODULE__, [], name: __MODULE__)
+    pid = GenServer.start_link(__MODULE__, [], name: __MODULE__)
+    |> elem(1)
   end
 
   def init([]) do
@@ -80,5 +84,64 @@ defmodule WorkerPoolManager do
   defp count_workers() do
     PrintSupervisor.count()
   end
+
+  def execute_speculatively(message) do
+    worker_pids = get_worker_pids(@spec_num_workers)
+
+    tasks = Enum.map(worker_pids, fn worker_pid ->
+      Task.async(fn ->
+        ref = make_ref()
+        send(worker_pid, {PrintSupervisor.get_worker_id(worker_pid), message, self(), ref})
+        receive do
+          {^ref, :result, result} -> result
+        after
+          @spec_timeout -> nil
+        end
+      end)
+    end)
+
+    await_first_task(tasks)
+  end
+
+  defp get_worker_pids(num_workers) do
+    PrintSupervisor |> Supervisor.which_children()
+    |> Enum.map(fn {_id, pid, _type, _modules} -> pid end)
+    |> Enum.take(num_workers)
+  end
+
+  defp await_first_task(tasks) do
+    tasks
+    |> Enum.map(fn task ->
+      try do
+        Task.await(task, @spec_timeout) # Add the timeout value here
+      rescue
+        Task.TimeoutError ->
+          nil
+      end
+    end)
+    |> Enum.reject(&is_nil/1)
+    |> List.first()
+  end
+
+
+  # def redistribute_messages(pid) do
+  #   flush_and_redistribute(pid)
+  # end
+
+  # defp flush_and_redistribute(pid) do
+  #   receive do
+  #     message ->
+  #       # Redistribute the message to the other workers
+  #       IO.puts("============================Redistributing message #{inspect message}")
+  #       Task.async(fn -> LoadBalancer.print(message) end)
+
+  #       # Recursively process the remaining messages
+  #       flush_and_redistribute(pid)
+
+  #   after
+  #     0 ->
+  #       IO.puts("No more messages to redistribute")
+  #   end
+  # end
 
 end
