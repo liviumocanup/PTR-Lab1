@@ -27,7 +27,7 @@ defmodule Read do
       hashtags = tweet["entities"]["hashtags"]
 
       # Task.async(fn -> LoadBalancer.print(text) end)
-      Task.async(fn -> WorkerPoolManager.execute_speculatively(text) end)
+      Task.async(fn -> WorkerPoolManager.execute_speculative(text) end)
       Enum.each(hashtags, fn hashtag -> Analyzer.analyze_hashtag(hashtag["text"]) end)
     end
   end

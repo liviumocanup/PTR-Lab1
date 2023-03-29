@@ -144,4 +144,8 @@ defmodule WorkerPoolManager do
   #   end
   # end
 
+  def execute_speculative(text) do
+    Task.async(fn -> LoadBalancer.print(text) end)
+  end
+
 end
