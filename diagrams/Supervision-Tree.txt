@@ -1,3 +1,4 @@
+Week 1-2-3
 @startuml
 
 [Root] as R
@@ -17,5 +18,57 @@ PS --> [Printer 3]
 [Load Balancer] --> [Worker Pool Manager]
 [Load Balancer] --> PS
 [Worker Pool Manager] --> PS
+
+@enduml
+
+
+Week 4
+@startuml
+
+[Root] as R
+[Reader Supervisor] as RS
+[Printer Supervisor] as PS
+[Censor Supervisor] as CS
+[Sentiment Supervisor] as SS
+[Engagement Supervisor] as ES
+[Printer Load Balancer] as PLB
+[Censor Load Balancer] as CLB
+[Sentiment Load Balancer] as SLB
+[Engagement Load Balancer] as ELB
+
+R --> RS
+R --> [Analyzer]
+R --> [PLB]
+R --> [CLB]
+R --> [SLB]
+R --> [ELB]
+R --> [Engagement Tracker]
+
+RS ----> [Reader 1]
+RS ----> [Reader 2]
+
+[PLB] --> [Printer Worker Pool Manager]
+[PLB] --> PS
+PS --> [Printer 1]
+PS --> [Printer 2]
+PS --> [Printer 3]
+
+[CLB] ---> CS
+CS --> [Censor 1]
+CS --> [Censor 2]
+CS --> [Censor 3]
+
+[SLB] ---> SS
+SS --> [Sentiment 1]
+SS --> [Sentiment 2]
+SS --> [Sentiment 3]
+
+[ELB] ---> ES
+ES --> [Engagement 1]
+ES --> [Engagement 2]
+ES --> [Engagement 3]
+
+
+[Printer Worker Pool Manager] --> PS
 
 @enduml

@@ -1,3 +1,4 @@
+Week 1-2-3
 @startuml
 
 participant "Analyzer" as A
@@ -15,6 +16,43 @@ PS <-- WPM: Start or terminate children
 LB -> PS: Request id of fitting Printer
 LB <- PS: Provide id 
 LB -> P: Tweet Text
+R -> A: Tweet Hashtag
+
+@enduml
+
+
+
+Week 4
+@startuml
+
+participant "Analyzer" as A
+collections "Readers" as R
+participant "Printer Load Balancer" as LB
+participant "Printer Supervisor" as PS
+collections "Printers" as P
+participant "Printer Worker Pool Manager" as WPM
+participant "Censor Load Balancer" as CLB
+participant "Sentiment Load Balancer" as SLB
+participant "Engagement Load Balancer" as ELB
+participant "Engagement Tracker" as ET
+
+R -> LB: Tweet Text
+LB -> PS: Request Printers' message queue
+LB <- PS: Printers' message queue length
+LB --> WPM: Increase or decrease Printers' count if needed
+PS <-- WPM: Start or terminate children
+LB -> PS: Request id of fitting Printer
+LB <- PS: Provide id 
+LB -> P: Tweet Text
+P -> CLB: Uncensored Tweet Text
+P <- CLB: Censored Tweet Text
+P --> SLB: Tweet Text
+P <-- SLB: Sentiment score
+P -> ELB: Tweet favorites, retweets, followers, username
+P <- ELB: Engagement score for username
+P --> ET: Store Enagement Score for username
+P <-- ET: Average ratio for the Engagement Scores of username
+
 R -> A: Tweet Hashtag
 
 @enduml
