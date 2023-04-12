@@ -1,6 +1,8 @@
 defmodule Root do
   def start do
-    EngagementTracker.start_link;
+    EngagementTracker.start_link()
+
+    Dispatcher.start_link()
 
     print_sup_name = GenericSupervisor.generate_supervisor_name(Print)
     eng_sup_name = GenericSupervisor.generate_supervisor_name(Engagement)
@@ -19,6 +21,8 @@ defmodule Root do
     true = LoadBalancer.start_link(sent_sup_name, nil)
     true = LoadBalancer.start_link(censor_sup_name, nil)
 
+    Aggregator.start_link()
+    Batcher.start_link()
     ReadSupervisor.start_link()
   end
 end

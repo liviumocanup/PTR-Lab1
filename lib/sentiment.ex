@@ -25,6 +25,20 @@ defmodule Sentiment do
     GenServer.call(pid, msg)
   end
 
+  def handle_cast({text, id}, state) do
+    words = String.downcase(text) |> String.trim() |> String.split(~r/\s+/)
+
+    mean_score = Enum.reduce(words, 0, fn word, acc ->
+      case Map.get(state, word) do
+        nil -> acc
+        score -> acc + score
+      end
+    end) / Enum.count(words)
+
+    Aggregator.store_sentiment(mean_score, id)
+    {:noreply, state}
+  end
+
   def handle_call({_, msg}, _from, state) do
     words = String.downcase(msg) |> String.trim() |> String.split(~r/\s+/)
     mean_score = Enum.reduce(words, 0, fn word, acc ->

@@ -22,9 +22,9 @@ defmodule LoadBalancer do
     {:ok, state}
   end
 
-  def handle_cast(info, state) do
+  def handle_cast({info, id}, state) do
     worker_pid = least_connected_worker(state)
-    GenServer.cast(worker_pid, {find_id(worker_pid, state), info})
+    GenServer.cast(worker_pid, {info, id})
     {:noreply, state}
   end
 
@@ -47,8 +47,8 @@ defmodule LoadBalancer do
     GenServer.call(GenServer.whereis(lb_name), info)
   end
 
-  def reader(lb_name, info) do
-    GenServer.cast(GenServer.whereis(lb_name), info)
+  def cast(lb_name, {info, id}) do
+    GenServer.cast(GenServer.whereis(lb_name), {info, id})
   end
 
   def schedule_check_idle do
