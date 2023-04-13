@@ -31,7 +31,6 @@ defmodule LoadBalancer do
   def handle_call(info, _from, state) do
     worker_pid = least_connected_worker(state)
     # IO.puts "Least connected worker: #{inspect find_id(worker_pid, state)} with #{inspect Process.info(worker_pid)[:message_queue_len]} messages"
-    # response = send(worker_pid, {find_id(worker_pid, state), info})
     response = GenServer.call(worker_pid, {find_id(worker_pid, state), info})
     {:reply, response, state}
   end

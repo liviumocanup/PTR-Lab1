@@ -1,8 +1,8 @@
 defmodule Print do
   use GenServer
 
-  @min_sleep_time 1000
-  @max_sleep_time 3000
+  @min_sleep_time 3000
+  @max_sleep_time 8000
 
   def start_link(id) do
     IO.puts "Starting printer #{id}..."
@@ -26,14 +26,12 @@ defmodule Print do
 
     Aggregator.store_tweet(censored_text, id)
 
-    # IO.puts "\nPrinter #{id} #{slept} -> \n\t- Sentiment: #{sentiment_score}\n\t- Engagement: #{engagement_score}\n\t #{inspect censored_msg}\n\t- Eng for User: #{username} = #{EngagementTracker.get_ratio(username)}"
     {:noreply, state}
   end
 
   defp sleep do
     sleep_time = :rand.uniform(@max_sleep_time - @min_sleep_time) + @min_sleep_time
     :timer.sleep(sleep_time)
-    # "slept for #{sleep_time} ms"
   end
 
 end

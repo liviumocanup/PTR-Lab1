@@ -54,16 +54,12 @@ defmodule Aggregator do
 
     tweets = Enum.map(selected_tweets, fn {_id, tweet} -> %{tweet: tweet.tweet, sentiment: tweet.sentiment, engagement: tweet.engagement} end)
 
-    # IO.puts("Aggregator: #{inspect new_state}")
-    # IO.puts("RETURNS: #{inspect tweets}")
-
     {:reply, tweets, new_state}
   end
 
   defp maybe_complete_aggregated_info(id, state) do
     case state[id] do
       %{tweet: tweet, sentiment: sentiment, engagement: engagement} ->
-        # Batcher.store({tweet, sentiment, engagement})
         Map.update(state, id, %{completed: true}, &Map.put(&1, :completed, true))
       _ ->
         state

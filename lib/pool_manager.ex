@@ -16,7 +16,6 @@ defmodule WorkerPoolManager do
   end
 
   def init(state) do
-    # state.supervisor_module.start_link(state.worker, @start_num_workers)
     {:ok, state}
   end
 

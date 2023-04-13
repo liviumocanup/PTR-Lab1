@@ -5,15 +5,13 @@ defmodule Batcher do
   @timeout 5000
 
   def start_link do
-    pid = GenServer.start_link(__MODULE__, [])
+    pid = GenServer.start_link(__MODULE__, %{})
     |> elem(1)
     Process.register(pid, __MODULE__)
-    IO.puts("Batcher pid #{inspect pid}")
   end
 
   def init(state) do
-    pid = self()
-    IO.puts("Batcher trying #{inspect pid}")
+    schedule_timeout()
     send(self(), {:process_batch, []})
     {:ok, state}
   end
@@ -22,61 +20,41 @@ defmodule Batcher do
     tweets = Aggregator.send_batch(@batch)
     acc = acc ++ tweets
     if length(acc) < @batch do
-      # IO.puts()
       send(self(), {:process_batch, acc})
     else
       if length(acc) == @batch do
-        IO.puts("============Batch of #{length(acc)} tweets is ready.=================")
-
-        Enum.each(acc, fn %{tweet: text, sentiment: sentiment, engagement: engagement} ->
-          IO.puts("-> Tweet: #{text}\n\rSentiment: #{sentiment}\n\rEngagement per user: #{engagement}")
-        end)
-
+        print(acc)
+        schedule_timeout()
         send(self(), {:process_batch, []})
       end
     end
-    # if length of tweets is smaller than @batch, add all the tweets in state
-    # if length of tweets is @batch delete
 
-    {:noreply, state}
+    {:noreply, %{acc: acc}}
   end
 
-  # def handle_info(:print_and_reset, state) do
-  #   new_state = print_and_reset(state)
-  #   send(self(), :process_batch)
-  #   {:noreply, new_state}
-  # end
+  def handle_info(:timeout, state) do
+    acc = state.acc
 
-  # defp request_and_append_tweets(state, tweets_needed) when tweets_needed > 0 do
-  #   aggregated_tweets = Aggregator.send_batch(tweets_needed)
-  #   received_number = length(aggregated_tweets)
-  #   new_state = Map.put(state, :tweets, state.tweets ++ aggregated_tweets)
+    if length(acc) > 0 do
+      print(acc)
+      schedule_timeout()
+      send(self(), {:process_batch, []})
+    else
+      schedule_timeout()
+    end
 
-  #   new_state = if received_number < tweets_needed do
-  #     request_and_append_tweets(new_state, tweets_needed - received_number)
-  #   else
-  #     new_state
-  #   end
-  #   new_state
-  # end
+    {:noreply, %{acc: []}}
+  end
 
-  # defp request_and_append_tweets(state, _), do: print_and_reset(state)
+  defp schedule_timeout() do
+    Process.send_after(self(), :timeout, @timeout)
+  end
 
-  # defp print_and_reset(state) do
-  #   if length(state.tweets) > 0 do
-  #     IO.puts("============Batch of #{length(state.tweets)} tweets is ready.=================")
+  def print(acc) do
+    IO.puts("============Batch of #{length(acc)} tweets is ready.=================")
 
-  #     IO.puts("Batcher #{inspect state}")
-
-  #     # Enum.each(state.tweets, fn %{tweet: text, sentiment: sentiment, engagement: engagement} ->
-  #     #   IO.puts("-> Tweet: #{text}\n\rSentiment: #{sentiment}\n\rEngagement per user: #{engagement}")
-  #     # end)
-
-  #     state = Map.update!(state, :tweets, &(&1 -- state.tweets))
-  #     IO.puts("AFTER #{inspect state}")
-  #     state
-  #   else
-  #     state
-  #   end
-  # end
+    Enum.each(acc, fn %{tweet: text, sentiment: sentiment, engagement: engagement} ->
+      IO.puts("-> Tweet: #{text}\n\rSentiment: #{sentiment}\n\rEngagement per user: #{engagement}")
+    end)
+  end
 end
