@@ -19,8 +19,8 @@ defmodule Aggregator do
     GenServer.cast(__MODULE__, {:sentiment, sentiment, id})
   end
 
-  def store_engagement(engagement, id) do
-    GenServer.cast(__MODULE__, {:engagement, engagement, id})
+  def store_engagement(engagement, username, id) do
+    GenServer.cast(__MODULE__, {:engagement, engagement, username, id})
   end
 
   def handle_cast({:tweet, text, id}, state) do
@@ -35,8 +35,9 @@ defmodule Aggregator do
     {:noreply, new_state}
   end
 
-  def handle_cast({:engagement, engagement, id}, state) do
+  def handle_cast({:engagement, engagement, username, id}, state) do
     new_state = Map.update(state, id, %{engagement: engagement}, &Map.put(&1, :engagement, engagement))
+    new_state = Map.update(new_state, id, %{username: username}, &Map.put(&1, :username, username))
     new_state = maybe_complete_aggregated_info(id, new_state)
     {:noreply, new_state}
   end
@@ -52,7 +53,7 @@ defmodule Aggregator do
       Map.delete(acc, id)
     end)
 
-    tweets = Enum.map(selected_tweets, fn {_id, tweet} -> %{tweet: tweet.tweet, sentiment: tweet.sentiment, engagement: tweet.engagement} end)
+    tweets = Enum.map(selected_tweets, fn {_id, tweet} -> %{tweet: tweet.tweet, sentiment: tweet.sentiment, engagement: tweet.engagement, username: tweet.username} end)
 
     {:reply, tweets, new_state}
   end

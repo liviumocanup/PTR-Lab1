@@ -1,6 +1,6 @@
 defmodule Root do
   def start do
-
+    DatabaseProxy.start_link()
     Dispatcher.start_link()
 
     Aggregator.start_link()

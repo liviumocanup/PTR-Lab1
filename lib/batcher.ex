@@ -23,7 +23,7 @@ defmodule Batcher do
       send(self(), {:process_batch, acc})
     else
       if length(acc) == @batch do
-        print(acc)
+        store(acc)
         schedule_timeout()
         send(self(), {:process_batch, []})
       end
@@ -36,7 +36,7 @@ defmodule Batcher do
     acc = state.acc
 
     if length(acc) > 0 do
-      print(acc)
+      store(acc)
       schedule_timeout()
       send(self(), {:process_batch, []})
     else
@@ -53,8 +53,13 @@ defmodule Batcher do
   def print(acc) do
     IO.puts("============Batch of #{length(acc)} tweets is ready.=================")
 
-    Enum.each(acc, fn %{tweet: text, sentiment: sentiment, engagement: engagement} ->
-      IO.puts("-> Tweet: #{text}\n\rSentiment: #{sentiment}\n\rEngagement per user: #{engagement}")
+    Enum.each(acc, fn %{tweet: text, sentiment: sentiment, engagement: engagement, username: username} ->
+      IO.puts("-> Tweet: #{text}\n\rSentiment: #{sentiment}\n\rEngagement for user: #{username} is #{engagement}")
     end)
+  end
+
+  def store(acc) do
+    Enum.each(acc, &DatabaseProxy.add_item/1)
+    # IO.puts("#{inspect DatabaseProxy.get_tweets()}")
   end
 end

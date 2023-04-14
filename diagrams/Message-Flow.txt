@@ -136,3 +136,91 @@ Ag --> Ba: Provide available tweets
 R -> A: Tweet Hashtag
 
 @enduml
+
+
+
+
+
+Week 6
+
+@startuml
+
+participant "Analyzer" as A
+collections "Readers" as R
+participant "Dispatcher" as DT
+
+participant "Printer Load Balancer" as LB
+participant "Printer Supervisor" as PS
+participant "Printer Worker Pool Manager" as WPM
+collections "Printers" as P
+
+participant "Censor Load Balancer" as CLB
+participant "Censor Supervisor" as CS
+collections "Censor" as C
+
+participant "Sentiment Load Balancer" as SLB
+participant "Sentiment Supervisor" as SS
+collections "Sentiment" as S
+
+participant "Engagement Load Balancer" as ELB
+participant "Engagement Supervisor" as ES
+collections "Engagement" as E
+participant "Engagement Tracker" as ET
+
+participant "Aggregator" as Ag
+participant "Batcher" as Ba
+
+participant "Database Proxy" as DBP
+participant "Database" as DB
+
+R -> DT: Tweet
+DT -> LB: Tweet text and tweet's id
+DT --> SLB: Send tweet text with the tweet's id
+DT -> ELB: Send tweet favorites, retweets, followers and username with the tweet's id
+
+LB -> PS: Request Printers' message queue
+LB <-- PS: Printers' message queue length
+LB -> WPM: Increase or decrease Printers' count if needed
+PS <- WPM: Start or terminate children
+LB -> PS: Request id of fitting Printer
+LB <-- PS: Provide id 
+LB -> P: Tweet Text
+P -> CLB: Uncensored Tweet Text
+
+CLB -> CS: Request Censors' message queue
+CLB <-- CS: Censors' message queue length
+CLB -> CS: Request id of fitting Censor
+CLB <-- CS: Provide id 
+CLB -> C: Uncensored Tweet Text
+P <- C: Censored Tweet Text
+
+P -> Ag: Send Censored Tweet Text with tweet ID
+
+SLB -> SS: Request Sentiments' message queue
+SLB <-- SS: Sentiments' message queue length
+SLB -> SS: Request id of fitting Sentiment
+SLB <-- SS: Provide id 
+SLB -> S: Tweet Text
+S -> Ag: Send computed Sentiment with tweet ID
+
+ELB -> ES: Request Engagements' message queue
+ELB <-- ES: Engagements' message queue length
+ELB -> ES: Request id of fitting Engagements
+ELB <-- ES: Provide id 
+ELB -> E: Tweet stats
+E --> ET: Store Enagement Score for username
+E -> ET: Retrieve engagement ratio for username
+E <-- ET: Provide engagement ratio for username
+E -> Ag: Send engagement ratio and username with tweet ID
+
+Ag <- Ba: Request @batch tweets
+Ag -> Ba: Provide available tweets
+Ag <-- Ba: Request @batch-provided tweets if not enough
+Ag --> Ba: Provide available tweets
+
+Ba -> DBP: Store @batch tweets + users
+DBP --> DB: Store tweets if db available
+
+R -> A: Tweet Hashtag
+
+@enduml
