@@ -30,7 +30,7 @@ defmodule Engagement do
 
     EngagementTracker.store(name, engagement_ratio)
 
-    Aggregator.store_engagement(EngagementTracker.get_ratio(name), id)
+    Aggregator.store_engagement(EngagementTracker.get_ratio(name), name, id)
 
     {:noreply, state}
   end
