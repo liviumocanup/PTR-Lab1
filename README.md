@@ -17,13 +17,41 @@ The project is an implementation of a stream processing system which consumes SS
 $ docker run -p 4000:4000 alexburlacu/rtp-server:faf18x
 ```
 
-## Supervisor Tree Diagram
+## Diagrams for Week 1-2-3
+**Supervisor Tree Diagram**
 
-![SuperTree](diagrams/Supervisor-Tree-Diagram.png)
+![SuperTree3](diagrams/Supervisor-Tree-Diagram.png)
 
-## Message Flow Diagram
+**Message Flow Diagram**
 
-![MessFlow](diagrams/Message-Flow-Diagram.png)
+![MessFlow3](diagrams/Message-Flow-Diagram.png)
+
+## Diagrams for Week 4
+**Supervisor Tree Diagram**
+
+![SuperTree4](diagrams/Supervisor-Tree4.png)
+
+**Message Flow Diagram**
+
+![MessFlow4](diagrams/Message-Flow4.png)
+
+## Diagrams for Week 5
+**Supervisor Tree Diagram**
+
+![SuperTree5](diagrams/Supervisor-Tree5.png)
+
+**Message Flow Diagram**
+
+![MessFlow5](diagrams/Message-Flow5.png)
+
+## Diagrams for Week 6
+**Supervisor Tree Diagram**
+
+![SuperTree6](diagrams/Supervisor-Tree6.png)
+
+**Message Flow Diagram**
+
+![MessFlow6](diagrams/Message-Flow6.png)
 
 ## Run
 
@@ -32,7 +60,7 @@ To run the program, execute the following commands.
 iex -S mix
 ```
 ```elixir
-iex> LoadBalancer.start_link()
+iex> Root.start
 ```
 
 To run the tests, execute the following commands.
