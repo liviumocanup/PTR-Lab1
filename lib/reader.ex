@@ -26,7 +26,7 @@ defmodule Read do
 
   defp process_event(_corrupted_event) do
     IO.puts("## Corrupted event discarded ##")
-    LoadBalancer.process(:PrintLB, ":kill")
+    Task.start(fn -> LoadBalancer.cast(:PrintLB, {":kill", 0}) end)
   end
 
   defp send_to_worker_pool(tweet) do

@@ -13,7 +13,7 @@ defmodule Print do
     {:ok, {}}
   end
 
-  def handle_call({id, :kill}, state) do
+  def handle_cast({id, :kill}, state) do
     IO.puts("=====> Killing Printer #{id} ##")
 
     {:stop, :normal, state}
